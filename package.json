@@ -1,0 +1,67 @@
+{
+  "name": "@passion_pi/react",
+  "version": "0.1.0",
+  "privet": false,
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "npm run build:check && npm run build:bundle && npm run build:type",
+    "build:bundle": "vite build",
+    "build:check": "echo \"Remember to add unit test!\" && npm run check",
+    "build:type": "rm -rf ./types && tsc -p ./types.json && rollup -c rollup.config.mjs",
+    "debug:file": "tsx",
+    "test:dev": "vitest",
+    "test:run": "vitest run",
+    "test:cov": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PassionPI/react.git"
+  },
+  "author": "PassionPI <ipjig@qq.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PassionPI/react/issues"
+  },
+  "homepage": "https://github.com/PassionPI/react#readme",
+  "dependencies": {
+    "immer": "^10.1.1",
+    "react": "^18.3.1",
+    "react-router-dom": "^6.24.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@vitest/coverage-v8": "^2.0.1",
+    "rambda": "^9",
+    "rollup": "^4",
+    "rollup-plugin-dts": "^6",
+    "tsx": "^4",
+    "typescript": "^5.5",
+    "vite": "^5",
+    "vitest": "^2"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/bundle.es.js",
+  "module": "./dist/bundle.es.js",
+  "types": "./dist/bundle.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/bundle.es.js",
+      "require": "./dist/bundle.cjs",
+      "default": "./dist/bundle.es.js",
+      "types": "./dist/bundle.d.ts"
+    }
+  },
+  "keywords": [
+    "async",
+    "react",
+    "utility"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
