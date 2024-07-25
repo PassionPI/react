@@ -1,24 +1,29 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useReducer } from 'react';
 
-const ob = <T extends object>(init: T, callback: () => void): T => {
+const weak = new WeakMap();
+
+const observer = <T extends object>(init: T, callback: () => void): T => {
   return new Proxy<T>(init, {
     get(...args) {
-      const x = Reflect.get(...args);
-      return x && typeof x == "object" ? ob(x as T, callback) : x;
+      const value = Reflect.get(...args);
+      if (value && typeof value == 'object') {
+        if (!weak.has(value)) {
+          weak.set(value, observer(value as object, callback));
+        }
+        return weak.get(value);
+      }
+      return value;
     },
-    set(...args) {
-      const b = Reflect.set(...args);
+    set(target, ...rest) {
+      const x = Reflect.set(target, ...rest);
+      weak.delete(target);
       callback();
-      return b;
+      return x;
     },
   });
 };
 
-const useMemoRef = <T>(init: () => T) => useRef(useMemo(init, []));
-
 export const useReactive = <T extends object>(init: () => T): T => {
-  const [, update] = useState([]);
-  const a = useMemoRef(init);
-  const b = useMemoRef(() => ob(a.current, () => update([])));
-  return b.current;
+  const [, update] = useReducer(() => [], []);
+  return useMemo(() => observer(init(), update), []);
 };
