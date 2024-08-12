@@ -51,7 +51,7 @@ export const createNav = () => {
     },
     go(to, opt) {
       if (typeof to === "string") {
-        const url = new URL(to, self.location.origin);
+        const url = new URL(to, globalThis.location.origin);
         to = url.pathname + url.search + url.hash;
       }
       ref.snapshot = [to, opt];
