@@ -20,8 +20,10 @@ const observer = <T extends object>(init: T, callback: () => void): T => {
         return true;
       }
       const x = Reflect.set(target, k, v, receiver);
-      map.delete(target);
-      callback();
+      if (x) {
+        map.delete(target);
+        callback();
+      }
       return x;
     },
   });
