@@ -8,7 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import { isFn } from "../util/is";
-import { reselectBy } from "../util/reselectBy";
+import { reselect } from "../util/reselectBy";
 import { shallowEqual } from "../util/shallowEqual";
 
 export function createCtx<T extends object = object, P extends object = object>(
@@ -41,8 +41,10 @@ export function createCtx<T extends object = object, P extends object = object>(
   ) {
     const dep = useContext(Dep);
     const ctx = useContext(Ctx);
-    const reselect = useMemo(() => reselectBy(() => ctx.current), []);
-    const getSnapshot = reselect(selectors, calc);
+    const getSnapshot = useMemo(
+      () => reselect(() => ctx.current, selectors, calc),
+      [],
+    );
     return useSyncExternalStore(dep.current.sub, getSnapshot);
   }
 
