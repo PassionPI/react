@@ -16,14 +16,14 @@ const observer = <T extends object>(init: T, callback: () => void): T => {
     },
     set(t, k, v, r) {
       if (Object.is(Reflect.get(t, k, r), v)) {
-        return !0;
+        return true;
       }
-      if (Reflect.set(t, k, v, r)) {
+      const ok = Reflect.set(t, k, v, r)
+      if (ok) {
         m.delete(t);
         callback();
-        return !0;
       }
-      return !1;
+      return ok;
     },
   });
 };
