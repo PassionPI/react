@@ -1,29 +1,29 @@
 import { useMemo, useReducer } from "react";
 
-const m = new WeakMap();
+const weak = new WeakMap();
 
 const observer = <T extends object>(init: T, callback: () => void): T => {
   return new Proxy<T>(init, {
     get(...args) {
-      const value = Reflect.get(...args);
-      if (value && typeof value == "object") {
-        if (!m.has(value)) {
-          m.set(value, observer(value as object, callback));
+      const v = Reflect.get(...args);
+      if (v && typeof v == "object") {
+        if (!weak.has(v)) {
+          weak.set(v, observer(v as object, callback));
         }
-        return m.get(value);
+        return weak.get(v);
       }
-      return value;
+      return v;
     },
     set(t, k, v, r) {
       if (Object.is(Reflect.get(t, k, r), v)) {
         return true;
       }
-      const ok = Reflect.set(t, k, v, r)
-      if (ok) {
-        m.delete(t);
+      const x = Reflect.set(t, k, v, r);
+      if (x) {
+        weak.delete(t);
         callback();
       }
-      return ok;
+      return x;
     },
   });
 };

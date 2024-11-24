@@ -1,3 +1,4 @@
+import { Calculator, pipe, ReadonlySelector, reselect } from "@passion_pi/fp";
 import React, {
   createContext,
   memo,
@@ -7,9 +8,7 @@ import React, {
   useRef,
   useSyncExternalStore,
 } from "react";
-import { isFn } from "../util/is";
-import { reselect } from "../util/reselectBy";
-import { shallowEqual } from "../util/shallowEqual";
+import { identify, shallowMemo } from "../util/object";
 
 export function createCtx<T extends object = object, P extends object = object>(
   useHooks: (props?: P) => T
@@ -35,50 +34,32 @@ export function createCtx<T extends object = object, P extends object = object>(
     return null;
   });
 
-  function useReselect<S extends readonly ((input: T) => unknown)[], R>(
+  function useSelector<R>(selector: (state: T) => R): R {
+    const dep = useContext(Dep);
+    const ctx = useContext(Ctx);
+    return useSyncExternalStore(dep.current.sub, () => selector(ctx.current));
+  }
+
+  function useReselect<S extends ReadonlySelector<T>, R>(
     selectors: S,
-    calc: (...args: { [Key in keyof S]: ReturnType<S[Key]> }) => R
+    calc: Calculator<T, S, R>
   ) {
-    const dep = useContext(Dep);
-    const ctx = useContext(Ctx);
-    const getSnapshot = useMemo(
-      () => reselect(() => ctx.current, selectors, calc),
-      [],
-    );
-    return useSyncExternalStore(dep.current.sub, getSnapshot);
+    return useSelector(useMemo(() => reselect(selectors, calc), []));
   }
 
-  function useCtx(): T;
-  function useCtx<R>(selector: (state: T) => R): R;
-  function useCtx<R>(selector?: (state: T) => R) {
-    const old = useRef<T | R>({} as T);
-    const dep = useContext(Dep);
-    const ctx = useContext(Ctx);
-    const getSnapshot = () => {
-      const x = isFn(selector) ? selector(ctx.current) : ctx.current;
-      if (!shallowEqual(old.current, x)) {
-        old.current = x;
-      }
-      return old.current;
-    };
-    return useSyncExternalStore(dep.current.sub, getSnapshot);
+  function useShallow(): T;
+  function useShallow<R>(selector: (state: T) => R): R;
+  function useShallow<R>(selector?: (state: T) => R) {
+    const shallow = useMemo(shallowMemo<T | R>, []);
+    return useSelector(pipe(selector || identify, shallow));
   }
 
-  function provider<Props extends object>(
-    component: React.ComponentType<Props>
-  ): React.ComponentType<Props>;
   function provider<Props extends object>(config: {
-    connect: (props: Props) => P;
+    connect?: (props: Props) => P;
     component: React.ComponentType<Props>;
-  }): React.ComponentType<Props>;
-  function provider<Props extends object>(
-    config:
-      | { connect: (props: Props) => P; component: React.ComponentType<Props> }
-      | React.ComponentType<Props>
-  ): React.ComponentType<Props> {
-    const [connect, Component] = isFn(config)
-      ? [null, config]
-      : [config.connect, config.component];
+  }): React.ComponentType<Props> {
+    const connect = config.connect;
+    const Component = config.component;
 
     return (props: Props) => {
       const refDep = useRef(useMemo(initDep, []));
@@ -94,5 +75,5 @@ export function createCtx<T extends object = object, P extends object = object>(
     };
   }
 
-  return { useReselect, useCtx, provider };
+  return { useSelector, useReselect, useShallow, provider };
 }
